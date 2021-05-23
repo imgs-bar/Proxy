@@ -4,22 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/joho/godotenv"
+	"github.com/valyala/fasthttp"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
 	"strings"
-	"github.com/valyala/fasthttp"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/joho/godotenv"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type OEmbedResponse struct {
@@ -45,7 +45,7 @@ var (
 const (
 	embedTemplate = `<html>
 		<head>
-			<title>{{.User}} on higure.wtf</title>
+			<title>{{.User}} on imgs.host</title>
 			<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 			<meta http-equiv="x-ua-compatible" content="ie=edge">
@@ -59,18 +59,32 @@ const (
 			{{ end }}
 			<meta name="theme-color" content="{{.Color}}" />
 			<link type="application/json+oembed" href="{{.OEmbedURL}}" />
-			<link rel="stylesheet" href="https://cdn.higure.wtf/higure/cdn.css">
+			<style>
+			@import url('https://fonts.googleapis.com/css?family=Roboto&display=swap');
+			body {
+				font-family: "Roboto",sans-serif;
+    			background-color: #212121;
+    			color: #eceff2;
+			}
+			h3 {
+    			font-weight: 300;
+    			font-size: 1.75rem;
+			}
+			h4 { 
+				font-weight: 300;
+				font-size: 1.5rem;
+			}
+			</style>
 		</head>
 
 		<body>
-			<center>
 				<div class="vertical-center">
 						{{ if .Image }}
 						<img style="-webkit-user-select: none;margin: auto;box-shadow: 0 0 5px rgb(0, 0, 0, 0.5);" src="{{.FileURL}}" />
 						{{ else if .Video }}
 						<video style="-webkit-user-select: none;margin: auto;box-shadow: 0 0 5px rgb(0, 0, 0, 0.5);" controls autoplay>
 							<source src="{{ .FileURL }}">
-							Your browser does not support this video tag.
+							Your browser does not support watching videos.
 						</video>
 						{{ else }}
 						<h3>
@@ -130,7 +144,7 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 
 	switch {
 	case requestPath == "/":
-		ctx.Redirect("https://higure.wtf", 301)
+		ctx.Redirect("https://imgs.bar", 301)
 	case strings.HasSuffix(basePath, ".json"):
 		requestPath = strings.SplitN(basePath, ".json", 2)[0]
 		var file bson.M
@@ -191,11 +205,6 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 			}
 		}
 
-		if file["userOnlyDomain"] == true && host != file["domain"].(string) {
-			sendErr(ctx, "invalid file")
-			ctx.Done()
-			return
-		}
 
 		resp, err := svc.GetObject(&s3.GetObjectInput{
 			Bucket: aws.String(os.Getenv("S3_BUCKET_NAME")),
@@ -219,7 +228,6 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 		embed := file["embed"].(primitive.M)
 		uploader := file["uploader"].(primitive.M)
 
-
 		embed["description"] = strings.ReplaceAll(embed["description"].(string), "{domain}", host)
 
 		if embed["enabled"] == true {
@@ -237,20 +245,19 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 				Color     string
 				Image     bool
 				Video     bool
-				User string
-				Size string
-				Name string
-
+				User      string
+				Size      string
+				Name      string
 			}{
 				FileURL:   cdnURL,
 				OEmbedURL: "https://" + host + "/" + file["filename"].(string) + ".json",
 				Desc:      embed["description"].(string),
 				Color:     embed["color"].(string),
 				Image:     mimetype == "image",
-				User: 	   uploader["username"].(string),
+				User:      uploader["username"].(string),
 				Name:      file["filename"].(string),
 				Size:      file["size"].(string),
-				Video:      mimetype == "video",
+				Video:     mimetype == "video",
 			}
 
 			ctx.SetContentType("text/html")
@@ -311,7 +318,7 @@ func connectToS3(endpoint string) {
 	newSession := session.New(s3Config)
 	svc = s3.New(newSession)
 
-    defer fmt.Println("Connected to S3")
+	defer fmt.Println("Connected to S3")
 }
 
 func connectToDatabase(mongoURL string) {
@@ -320,7 +327,7 @@ func connectToDatabase(mongoURL string) {
 		log.Fatal(err)
 	}
 
-	database := client.Database("higure")
+	database := client.Database("imgs")
 	collection = database.Collection("files")
 	shortenerCol = database.Collection("shorteners")
 	invisibleURL = database.Collection("invisibleurls")
