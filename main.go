@@ -36,7 +36,7 @@ type Response struct {
 
 var (
 	shortenerCol *mongo.Collection
-	collection   *mongo.Collection
+	files        *mongo.Collection
 	invisibleURL *mongo.Collection
 	mongoContext = context.TODO()
 	svc          *s3.S3
@@ -78,7 +78,12 @@ const (
 		</head>
 
 		<body>
+			<center>
 				<div class="vertical-center">
+						<h3>
+							{{ .Name }}
+							(<span class="info">{{ .Size }}</span>)
+						</h3>
 						{{ if .Image }}
 						<img style="-webkit-user-select: none;margin: auto;box-shadow: 0 0 5px rgb(0, 0, 0, 0.5);" src="{{.FileURL}}" />
 						{{ else if .Video }}
@@ -87,10 +92,6 @@ const (
 							Your browser does not support watching videos.
 						</video>
 						{{ else }}
-						<h3>
-							{{ .Name }}
-							(<span class="info">{{ .Size }}</span>)
-						</h3>
 						<button onclick="window.location.href = '{{ .FileURL }}'" style="
 						    appearance: none;
 						    background: white;
@@ -148,7 +149,7 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 	case strings.HasSuffix(basePath, ".json"):
 		requestPath = strings.SplitN(basePath, ".json", 2)[0]
 		var file bson.M
-		if err := collection.FindOne(mongoContext, bson.M{"filename": requestPath}).Decode(&file); err != nil {
+		if err := files.FindOne(mongoContext, bson.M{"filename": requestPath}).Decode(&file); err != nil {
 			sendErr(ctx, "invalid file")
 			ctx.Done()
 			return
@@ -191,14 +192,14 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 				return
 			}
 			if file != nil {
-				if err := collection.FindOne(mongoContext, bson.M{"filename": file["filename"]}).Decode(&file); err != nil {
+				if err := files.FindOne(mongoContext, bson.M{"filename": file["filename"]}).Decode(&file); err != nil {
 					sendErr(ctx, "invalid file")
 					ctx.Done()
 					return
 				}
 			}
 		} else {
-			if err := collection.FindOne(mongoContext, bson.M{"filename": basePath}).Decode(&file); err != nil {
+			if err := files.FindOne(mongoContext, bson.M{"filename": basePath}).Decode(&file); err != nil {
 				sendErr(ctx, "invalid file")
 				ctx.Done()
 				return
@@ -227,8 +228,6 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 		cdnURL := os.Getenv("S3_ENDPOINT") + "/" + os.Getenv("S3_BUCKET_NAME") + "/" + file["key"].(string)
 		embed := file["embed"].(primitive.M)
 		uploader := file["uploader"].(primitive.M)
-
-		embed["description"] = strings.ReplaceAll(embed["description"].(string), "{domain}", host)
 
 		if embed["enabled"] == true {
 			t, err := template.New("embed").Parse(embedTemplate)
@@ -328,7 +327,7 @@ func connectToDatabase(mongoURL string) {
 	}
 
 	database := client.Database("imgs")
-	collection = database.Collection("files")
+	files = database.Collection("files")
 	shortenerCol = database.Collection("shorteners")
 	invisibleURL = database.Collection("invisibleurls")
 
