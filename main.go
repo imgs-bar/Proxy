@@ -74,11 +74,23 @@ const (
 				font-weight: 300;
 				font-size: 1.5rem;
 			}
+			#nav {
+				top: 15px;
+				left: 20px;
+				font-size: 20;
+			}
+			.name {
+				color: white;
+				text-decoration: none;
+			}
 			</style>
 		</head>
 
 		<body>
 			<center>
+				<div class="nav">
+					<a href="https://imgs.bar" class="name">imgs.bar</a>
+				</div>
 				<div class="vertical-center">
 						<h3>
 							{{ .Name }}
