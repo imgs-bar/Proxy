@@ -75,9 +75,10 @@ const (
 				font-size: 1.5rem;
 			}
 			#nav {
+    			position: absolute;
 				top: 15px;
 				left: 20px;
-				font-size: 20;
+				font-size: 40;
 			}
 			.name {
 				color: white;
@@ -87,10 +88,10 @@ const (
 		</head>
 
 		<body>
-			<center>
 				<div class="nav">
 					<a href="https://imgs.bar" class="name">imgs.bar</a>
 				</div>
+			<center>
 				<div class="vertical-center">
 						<h3>
 							{{ .Name }}
