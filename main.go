@@ -63,7 +63,7 @@ const (
 			@import url('https://fonts.googleapis.com/css?family=Roboto&display=swap');
 			body {
 				font-family: "Roboto",sans-serif;
-    			background-color: #212121;
+    			background-color: #161616;
     			color: #eceff2;
 			}
 			h3 {
@@ -89,7 +89,7 @@ const (
 
 		<body>
 				<div class="nav">
-					<a href="https://imgs.bar" class="name">imgs.bar</a>
+					<a href="https://imgs.bar" class="name">Back to imgs.bar</a>
 				</div>
 			<center>
 				<div class="vertical-center">
@@ -116,7 +116,7 @@ const (
 						">Download</button>
 						{{ end }}
 						
-						<h5>Uploaded by: <span class="info">{{.User}}</span></h5>
+						<h4>Uploaded by: <span class="info">{{.User}}</span></h4>
 				</div>
 			</center>
 		</body>
@@ -128,7 +128,7 @@ const (
 			<meta property="og:image" content="{{.FileURL}}" />
 		</head>
 
-		<body style="margin: 0px; background: #212121; height: 100%; display: flex; align-items: center">
+		<body style="margin: 0px; background: #161616; height: 100%; display: flex; align-items: center">
 			<img width="500px" style="-webkit-user-select: none;margin: auto;" src="{{.FileURL}}" />
 		</body>
 	</html>`
