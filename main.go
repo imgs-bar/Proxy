@@ -20,6 +20,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"net/url"
 )
 
 type OEmbedResponse struct {
@@ -153,7 +154,7 @@ func main() {
 
 func requestHandler(ctx *fasthttp.RequestCtx) {
 	requestPath := string(ctx.Path())
-	basePath := path.Base(requestPath)
+	basePath := url.PathUnescape(path.Base(requestPath))
 	host := string(ctx.Host())
 
 	switch {
