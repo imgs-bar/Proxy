@@ -157,7 +157,8 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 	basePath, err := url.PathUnescape(path.Base(requestPath))
 	host := string(ctx.Host())
 	if err != nil {
-		return err
+		sendErr(ctx, "invalid file")
+		return
 	}
 	switch {
 	case requestPath == "/":
