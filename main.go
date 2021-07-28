@@ -39,6 +39,7 @@ var (
 	shortenerCol *mongo.Collection
 	files        *mongo.Collection
 	invisibleURL *mongo.Collection
+	emojiURL *mongo.Collection
 	mongoContext = context.TODO()
 	svc          *s3.S3
 )
@@ -215,11 +216,24 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 					return
 				}
 			}
-		} else {
+		} else if strings.HasSuffix(basePath, ".png") || strings.HasSuffix(basePath, ".jpg") {
 			if err := files.FindOne(mongoContext, bson.M{"filename": basePath}).Decode(&file); err != nil {
 				sendErr(ctx, "invalid file")
 				ctx.Done()
 				return
+			}
+		} else {
+			if err := emojiURL.FindOne(mongoContext, bson.M{"_id": basePath}).Decode(&file); err != nil {
+				sendErr(ctx, "no emoji url or file was found")
+				ctx.Done()
+				return
+			}
+			if file != nil {
+				if err := files.FindOne(mongoContext, bson.M{"filename": file["filename"]}).Decode(&file); err != nil {
+					sendErr(ctx, "invalid file")
+					ctx.Done()
+					return
+				}
 			}
 		}
 
@@ -347,6 +361,7 @@ func connectToDatabase(mongoURL string) {
 	files = database.Collection("files")
 	shortenerCol = database.Collection("shorteners")
 	invisibleURL = database.Collection("invisibleurls")
+	emojiURL = database.Collection("emojiurls")
 
 	defer fmt.Println("Connected to MongoDB cluster")
 }
