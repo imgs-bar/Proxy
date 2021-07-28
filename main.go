@@ -156,7 +156,9 @@ func requestHandler(ctx *fasthttp.RequestCtx) {
 	requestPath := string(ctx.Path())
 	basePath, err := url.PathUnescape(path.Base(requestPath))
 	host := string(ctx.Host())
-
+	if err != nil {
+		return err
+	}
 	switch {
 	case requestPath == "/":
 		ctx.Redirect("https://imgs.bar", 301)
