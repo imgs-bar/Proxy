@@ -154,7 +154,7 @@ func main() {
 
 func requestHandler(ctx *fasthttp.RequestCtx) {
 	requestPath := string(ctx.Path())
-	basePath := url.PathUnescape(path.Base(requestPath))
+	basePath, err := url.PathUnescape(path.Base(requestPath))
 	host := string(ctx.Host())
 
 	switch {
